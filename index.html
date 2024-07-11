@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: radial-gradient(circle at 50% 50%, #0f0f10, #7d8983, #000000);
+            font-family: 'Roboto', sans-serif;
+            color: #fff;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            user-select: none;
+            letter-spacing: 2px;
+            background: -webkit-linear-gradient(#ffc038, #b08a21);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #qr-input {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2em;
+            outline: none;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        #qr-input:hover, #qr-input:focus {
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
+        }
+
+        #scan-button {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #fad96d, #caa132);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background 0.3s;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        #scan-button:hover {
+            background: transparent;
+            border: 1px solid white;
+        
+        }
+
+        #qr-result {
+            margin-top: 20px;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 30px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            max-width: 90%;
+            word-wrap: break-word;
+            text-align: center;
+        }
+
+        #copy-button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: transparent;
+            color: #fff;
+            border: 1px solid white;
+            border-radius: 20px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.3s;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            display: none;
+        }
+
+        #copy-button:hover {
+            background: transparent;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            #qr-input, #scan-button {
+                font-size: 1em;
+                padding: 10px;
+            }
+
+            #scan-button {
+                padding: 10px 20px;
+            }
+
+            #qr-result {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>QR Code Scanner</h1>
+    <input type="file" id="qr-input" accept="image/*">
+    <button id="scan-button">Scan QR Code</button>
+    <div id="qr-result"></div>
+    <button id="copy-button">Copy to Clipboard</button>
+
+    <script>
+        document.getElementById('scan-button').addEventListener('click', function() {
+            var input = document.getElementById('qr-input');
+            if (input.files && input.files[0]) {
+                var formData = new FormData();
+                formData.append('file', input.files[0]);
+        
+                fetch('https://api.qrserver.com/v1/read-qr-code/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data[0] && data[0].symbol[0] && data[0].symbol[0].data) {
+                        document.getElementById('qr-result').innerText = `Scan result: ${data[0].symbol[0].data}`;
+                        document.getElementById('copy-button').style.display = 'inline-block';
+                    } else {
+                        document.getElementById('qr-result').innerText = 'No QR code detected.';
+                        document.getElementById('copy-button').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('qr-result').innerText = 'Error scanning QR code.';
+                    document.getElementById('copy-button').style.display = 'none';
+                });
+            } else {
+                alert('Please select an image file.');
+            }
+        });
+
+        document.getElementById('copy-button').addEventListener('click', function() {
+            var qrResult = document.getElementById('qr-result').innerText.replace('Scan result: ', '');
+            if (qrResult) {
+                navigator.clipboard.writeText(qrResult).then(() => {
+                    alert('QR code result copied to clipboard!');
+                }).catch(err => {
+                    console.error('Error copying text: ', err);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
